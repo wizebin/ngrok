@@ -9,7 +9,7 @@ async function connect (opts) {
   opts = defaults(opts);
   validate(opts);
   if (opts.authtoken) {
-    await setAuthtoken(opts.authtoken, opts.configPath);
+    await setAuthtoken(opts.authtoken, opts.configPath, opts.binPath);
   }
   const url = await getProcess(opts);
   internalApi = request.defaults({baseUrl: url});
@@ -55,7 +55,7 @@ async function connectRetry (opts, retryCount = 0) {
  }
 
 function isRetriable (err) {
-  if (!err.response) return false; 
+  if (!err.response) return false;
   const body = err.response.body;
   const notReady500 = err.statusCode === 500 && /panic/.test(body)
   const notReady502 = err.statusCode === 502 && body.details && body.details.err === 'tunnel session not ready yet';

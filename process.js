@@ -10,12 +10,12 @@ let processPromise, activeProcess;
 
 /*
 	ngrok process runs internal ngrok api
-	and should be spawned only ONCE 
+	and should be spawned only ONCE
 	(respawn allowed if it fails or .kill method called)
 */
 
 async function getProcess(opts) {
-	if (processPromise) return processPromise; 
+	if (processPromise) return processPromise;
 	try {
 		processPromise = startProcess(opts);
 		return await processPromise;
@@ -32,11 +32,11 @@ async function startProcess (opts) {
 	if (opts.region) start.push('--region=' + opts.region);
 	if (opts.configPath) start.push('--config=' + opts.configPath);
 	if (opts.binPath) dir = opts.binPath(dir);
-	
+
 	const ngrok = spawn(bin, start, {cwd: dir})
-	
+
 	let resolve, reject;
-	const apiUrl = new Promise((res, rej) => {   
+	const apiUrl = new Promise((res, rej) => {
 		resolve = res;
 		reject = rej;
 	});
@@ -49,7 +49,7 @@ async function startProcess (opts) {
 		} else if (msg.match(inUse)) {
 			reject(new Error(msg.substring(0, 10000)));
 		}
-	});  
+	});
 
 	ngrok.stderr.on('data', data => {
 		const msg = data.toString().substring(0, 10000);
@@ -66,7 +66,7 @@ async function startProcess (opts) {
 	try {
 		const url = await apiUrl;
 		activeProcess = ngrok;
-		return url;      
+		return url;
 	}
 	catch(ex) {
 		ngrok.kill();
@@ -86,11 +86,13 @@ function killProcess ()  {
 	});
 }
 
-async function setAuthtoken (token, configPath) {
+async function setAuthtoken (token, configPath, binPath) {
 	const authtoken = ['authtoken', token];
 	if (configPath) authtoken.push('--config=' + configPath);
 
 	let dir = __dirname + '/bin';
+	if (binPath) dir = binPath(dir);
+
 	const ngrok = spawn(bin, authtoken, {cwd: dir});
 
 	const killed = new Promise((resolve, reject) => {
