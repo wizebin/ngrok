@@ -1,6 +1,6 @@
 const request = require('request-promise-native');
 const uuid = require('uuid');
-const {getProcess, killProcess, setAuthtoken} = require('./process');
+const {getProcess, killProcess, setAuthtoken, setAuthtokenOpt} = require('./process');
 
 let internalApi;
 let tunnels = {};
@@ -9,7 +9,7 @@ async function connect (opts) {
   opts = defaults(opts);
   validate(opts);
   if (opts.authtoken) {
-    await setAuthtoken(opts.authtoken, opts.configPath, opts.binPath);
+    await setAuthtokenOpt(opts);
   }
   const url = await getProcess(opts);
   internalApi = request.defaults({baseUrl: url});

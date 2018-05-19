@@ -26,14 +26,23 @@ async function getProcess(opts) {
 	}
 }
 
-async function startProcess (opts) {
-	let dir = __dirname + '/bin';
-	const start = ['start', '--none', '--log=stdout'];
-	if (opts.region) start.push('--region=' + opts.region);
-	if (opts.configPath) start.push('--config=' + opts.configPath);
-	if (opts.binPath) dir = opts.binPath(dir);
+function getOptionArray (opts) {
+	const optionArray = [];
+	if (opts.region) optionArray.push('--region=' + opts.region);
+	if (opts.configPath) optionArray.push('--config=' + opts.configPath);
+	if (opts.inspect) optionArray.push('--inspect=' + inspect);
+	return optionArray;
+}
 
-	const ngrok = spawn(bin, start, {cwd: dir})
+function getOptionDir (opts) {
+	let dir = __dirname + '/bin';
+	if (opts.binPath) dir = opts.binPath(dir);
+	return dir;
+}
+
+async function startProcess (opts) {
+	const start = ['start', '--none', '--log=stdout'].concat(getOptionArray(opts));
+	const ngrok = spawn(bin, start, {cwd: getOptionDir(opts)})
 
 	let resolve, reject;
 	const apiUrl = new Promise((res, rej) => {
@@ -86,14 +95,9 @@ function killProcess ()  {
 	});
 }
 
-async function setAuthtoken (token, configPath, binPath) {
-	const authtoken = ['authtoken', token];
-	if (configPath) authtoken.push('--config=' + configPath);
-
-	let dir = __dirname + '/bin';
-	if (binPath) dir = binPath(dir);
-
-	const ngrok = spawn(bin, authtoken, {cwd: dir});
+async function setAuthtokenOpt (opts) {
+	const authtoken = ['authtoken', opts.authtoken].concat(getOptionArray(opts));
+	const ngrok = spawn(bin, authtoken, {cwd: getOptionDir(opts)});
 
 	const killed = new Promise((resolve, reject) => {
 		ngrok.stdout.once('data', () => resolve());
@@ -108,8 +112,13 @@ async function setAuthtoken (token, configPath, binPath) {
 	}
 }
 
+async function setAuthtoken (token, configPath, binPath) {
+	return setAuthtokenOpt({ authtoken: token, configPath: configPath, binPath: binPath });
+}
+
 module.exports = {
 	getProcess,
 	killProcess,
-	setAuthtoken
+	setAuthtoken,
+	setAuthtokenOpt
 };
